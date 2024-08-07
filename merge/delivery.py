@@ -6,6 +6,25 @@ from .models import Order  # Ensure you have the Order model defined
 from .schemas import DeliveryStatusUpdate  # Assuming you have a DeliveryStatusUpdate schema defined
 from .dependencies import get_current_delivery_person  # Assuming you have a dependency to get the current delivery person
 
+# delivery model
+# models/delivery_comment.py
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from .database import Base
+
+class DeliveryComment(Base):
+    __tablename__ = "delivery_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    delivery_person_id = Column(Integer, ForeignKey("delivery_persons.id"), nullable=False)  # Assuming you have a delivery_persons table
+    comment = Column(String, nullable=False)
+
+    order = relationship("Order", back_populates="delivery_comments")  # Relationship to the Order model
+    delivery_person = relationship("DeliveryPerson")  # Assuming you have a DeliveryPerson model
+
+
+
 router = APIRouter()
 # Update delivery status endpoint
 @router.put("/deliveries/{order_id}/status", response_model=Order)
