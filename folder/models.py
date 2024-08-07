@@ -34,7 +34,7 @@ class Pizza(Base):
 # app/models/order.py
 from sqlalchemy import Column, Integer, String, Float, Enum, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from app.database import Base
+from database.database import Base
 import enum
 from datetime import datetime
 
