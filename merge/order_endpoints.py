@@ -54,3 +54,27 @@ async def get_orders(db: Session = Depends(get_db), current_user: User = Depends
         raise HTTPException(status_code=404, detail="No orders found for this user")
 
     return orders
+
+# Admin endpoint
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from .database import get_db
+from .models import Order  # Ensure you have the Order model defined
+from .schemas import OrderUpdate  # Assuming you have an OrderUpdate schema defined
+from .dependencies import role_required  # Assuming you have a role_required dependency
+
+router = APIRouter()
+
+@router.put("/orders/{order_id}/status", response_model=Order)
+@role_required("admin")  # Ensure only admins can access this endpoint
+async def update_order_status(order_id: int, order_update: OrderUpdate, db: Session = Depends(get_db)):
+    # Find the order to update
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Update the order status
+    order.status = order_update.status
+    db.commit()
+    db.refresh(order)
+    return order
