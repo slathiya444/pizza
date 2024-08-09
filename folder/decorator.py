@@ -22,6 +22,46 @@ def authorize_role(allowed_roles):
     return decorator
 
 
+from functools import wraps
+from fastapi import HTTPException, Depends
+from .database import get_db
+from .auth import oauth2_scheme, get_current_user
+from sqlalchemy.orm import Session
+
+
+def authorize_role2(allowed_roles):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(
+                *args,
+                token: str = Depends(oauth2_scheme),
+                db: Session = Depends(get_db),
+                **kwargs
+        ):
+            current_user = get_current_user(token, db)
+
+            if current_user.role not in allowed_roles:
+                raise HTTPException(status_code=403, detail="Not authorized")
+
+            return await func(*args, current_user=current_user, db=db, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
+# Usage in your route
+@router.post("/pizzas", response_model=PizzaResponse)
+@authorize_role(["admin", "chef"])  # Specify the allowed roles
+def create_pizza(
+        pizza: PizzaCreate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Your existing function logic here
+    pass
+
+
 # Usage in your route
 @router.post("/pizzas", response_model=PizzaResponse)
 @authorize_role(["admin", "chef"])  # Specify the allowed roles
